@@ -1,27 +1,137 @@
 <!DOCTYPE html>
-<html lang="en">
-    
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chess</title>
+    <title>Raycaster</title>
     <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f0f0f0;
+        #g {
+            background: black;
+            display: block;
+            margin: 100px auto;
         }
     </style>
 </head>
-
 <body>
-    <div class="game" id="game">
-    </div>
-    <script>
-        
-    </script>
+    <canvas id="g" width="640" height="480"></canvas>
 </body>
-
 </html>
+
+<script>
+    var pressedKeys = {}
+    window.onkeyup=function(e){pressedKeys[e.keyCode] = false;}
+    window.onkeydown=function(e){pressedKeys[e.keyCode] = true;}
+
+    const scrWidth = 640; const scrHeight = 480;
+    const mapWidth = 24; const mapHeight = 24;
+
+    const onesArray = Array(mapWidth).fill(1);
+    let worldMap = [onesArray, ...Array(mapWidth-2).fill([1, ...Array(mapWidth-2).fill(0), 1]), onesArray];
+
+    let posX = 8;
+    let posY = 8;
+    let dirX = -1;
+    let dirY = 0;
+    let planeX = 0;
+    let planeY = 0.66;
+
+    var canvas = document.getElementById('g'); if (canvas.getContext) {var ctx = canvas.getContext('2d');}
+
+    function getColor(c) {
+        switch(c) {
+            case 0: return '#f00';
+            case 1: return '#0f0';
+            case 2: return '#00f';
+            default: return '#fff';
+        }
+    }
+    function drawLine(ctx, src, dst, srk='black', w=1) {
+        if (srk) {ctx.strokeStyle = srk;}
+        if (w) {ctx.lineWidth = w;}
+        ctx.beginPath();
+        ctx.moveTo(...src);
+        ctx.lineTo(...dst);
+        ctx.stroke();
+    }
+    function updateFrame(delta) {
+        ctx.clearRect(0, 0, scrWidth, scrHeight);
+        let w = scrWidth, h = scrHeight;
+        for (let x = 0; x < w; x++) {
+            let camX = 2 * x / w - 1;
+            let rayDirX = dirX + planeX * camX;
+            let rayDirY = dirY + planeY * camX;
+            let mapX = Math.floor(posX);
+            let mapY = Math.floor(posY);
+            let sideDistX, sideDistY;
+            let deltaDistX = (rayDirX == 0) ? 1e30 : Math.abs(1 / rayDirX);
+            let deltaDistY = (rayDirY == 0) ? 1e30 : Math.abs(1 / rayDirY);
+            let perpWallDist, stepX, stepY, side;
+            let hit = 0;
+            if (rayDirX < 0) {
+                stepX = -1;
+                sideDistX = (posX - mapX) * deltaDistX;
+            } else {
+                stepX = 1;
+                sideDistX = (mapX + 1.0 - posX) * deltaDistX;
+            }
+            if (rayDirY < 0) {
+                stepY = -1;
+                sideDistY = (posY - mapY) * deltaDistY;
+            } else {
+                stepY = 1;
+                sideDistY = (mapY + 1.0 - posY) * deltaDistY;
+            }
+            while (hit == 0) {
+                if (sideDistX < sideDistY) {
+                    sideDistX += deltaDistX;
+                    mapX += stepX;
+                    side = 0;
+                } else {
+                    sideDistY += deltaDistY;
+                    mapY += stepY;
+                    side = 1;
+                }
+                if (worldMap[mapX][mapY] > 0) hit = 1;
+            }
+            if (side == 0) perpWallDist = (mapX - posX + (1 - stepX) / 2) / rayDirX;
+            else perpWallDist = (mapY - posY + (1 - stepY) / 2) / rayDirY;
+            let lineH = Math.abs(Math.floor(h / perpWallDist));
+            let drawsrc = Math.max(Math.floor(-lineH / 2 + h / 2), 0);
+            let drawdst = Math.min(Math.floor(lineH / 2 + h / 2), h - 1);
+            let color = getColor(worldMap[mapX][mapY]);
+            if (side == 1) color = getColor(worldMap[mapX][mapY] - 1);
+            drawLine(ctx, [x, drawsrc], [x, drawdst], color, 1);
+        }
+
+        let sped = 5.0 * delta;
+        let rsped = 3.0 * delta;
+        if (pressedKeys["87"]) {
+            if (worldMap[Math.floor(posX + dirX * sped)][Math.floor(posY)] == 0) posX += dirX * sped;
+            if (worldMap[Math.floor(posX)][Math.floor(posY + dirY * sped)] == 0) posY += dirY * sped;
+        }
+        if (pressedKeys["83"]) {
+            if (worldMap[Math.floor(posX - dirX * sped)][Math.floor(posY)] == 0) posX -= dirX * sped;
+            if (worldMap[Math.floor(posX)][Math.floor(posY - dirY * sped)] == 0) posY -= dirY * sped;
+        }
+        if (pressedKeys["68"]) {
+            let oldDirX = dirX;
+            dirX = dirX * Math.cos(-rsped) - dirY * Math.sin(-rsped);
+            dirY = oldDirX * Math.sin(-rsped) + dirY * Math.cos(-rsped);
+            let oldPlaneX = planeX;
+            planeX = planeX * Math.cos(-rsped) - planeY * Math.sin(-rsped);
+            planeY = oldPlaneX * Math.sin(-rsped) + planeY * Math.cos(-rsped);
+        }
+        if (pressedKeys["65"]) {
+            let oldDirX = dirX;
+            dirX = dirX * Math.cos(rsped) - dirY * Math.sin(rsped);
+            dirY = oldDirX * Math.sin(rsped) + dirY * Math.cos(rsped);
+            let oldPlaneX = planeX;
+            planeX = planeX * Math.cos(rsped) - planeY * Math.sin(rsped);
+            planeY = oldPlaneX * Math.sin(rsped) + planeY * Math.cos(rsped);
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function(e) {
+        let fps = 30; let intrv = 1 / fps;
+        setInterval(function(){
+            updateFrame(intrv);
+        }, intrv * 1000);
+    })
+</script>
