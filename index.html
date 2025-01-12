@@ -9,11 +9,8 @@
         }
     </style>
 </head>
-<body>
-    <canvas id="g" width="1200" height="900"></canvas>
-</body>
+<body><canvas id="g" width="1200" height="900"></canvas></body>
 </html>
-
 <script>
     var pressedKeys = {}
     window.onkeyup=function(e){pressedKeys[e.keyCode] = false;}
@@ -32,6 +29,8 @@
 
     var canvas = document.getElementById('g'); if (canvas.getContext) {var ctx = canvas.getContext('2d');}
 
+    const MF = Math.floor;
+
     function getColor(c) {
         switch(c) {
             case 0: return '#f00';
@@ -40,7 +39,7 @@
             default: return '#fff';
         }
     }
-    function drawLine(ctx, src, dst, srk='black', w=1) {
+    function drawLine(src, dst, srk='black', w=1) {
         if (srk) {ctx.strokeStyle = srk;}
         if (w) {ctx.lineWidth = w;}
         ctx.beginPath();
@@ -55,8 +54,8 @@
             let camX = 2 * x / w - 1;
             let rayDirX = dirX + planeX * camX;
             let rayDirY = dirY + planeY * camX;
-            let mapX = Math.floor(posX);
-            let mapY = Math.floor(posY);
+            let mapX = MF(posX);
+            let mapY = MF(posY);
             let sideDistX, sideDistY;
             let deltaDistX = (rayDirX == 0) ? 1e30 : Math.abs(1 / rayDirX);
             let deltaDistY = (rayDirY == 0) ? 1e30 : Math.abs(1 / rayDirY);
@@ -90,23 +89,23 @@
             }
             if (side == 0) perpWallDist = (mapX - posX + (1 - stepX) / 2) / rayDirX;
             else perpWallDist = (mapY - posY + (1 - stepY) / 2) / rayDirY;
-            let lineH = Math.abs(Math.floor(h / perpWallDist));
-            let drawsrc = Math.max(Math.floor(-lineH / 2 + h / 2), 0);
-            let drawdst = Math.min(Math.floor(lineH / 2 + h / 2), h - 1);
+            let lineH = Math.abs(MF(h / perpWallDist));
+            let drawsrc = Math.max(MF(-lineH / 2 + h / 2), 0);
+            let drawdst = Math.min(MF(lineH / 2 + h / 2), h - 1);
             let color = getColor(worldMap[mapX][mapY]);
             if (side == 1) color = getColor(worldMap[mapX][mapY] - 1);
-            drawLine(ctx, [x, drawsrc], [x, drawdst], color, 1);
+            drawLine([x, drawsrc], [x, drawdst], color, 1);
         }
 
         let sped = 5.0 * delta;
         let rsped = 3.0 * delta;
         if (pressedKeys["87"]) {
-            if (worldMap[Math.floor(posX + dirX * sped)][Math.floor(posY)] == 0) posX += dirX * sped;
-            if (worldMap[Math.floor(posX)][Math.floor(posY + dirY * sped)] == 0) posY += dirY * sped;
+            if (worldMap[MF(posX + dirX * sped)][MF(posY)] == 0) posX += dirX * sped;
+            if (worldMap[MF(posX)][MF(posY + dirY * sped)] == 0) posY += dirY * sped;
         }
         if (pressedKeys["83"]) {
-            if (worldMap[Math.floor(posX - dirX * sped)][Math.floor(posY)] == 0) posX -= dirX * sped;
-            if (worldMap[Math.floor(posX)][Math.floor(posY - dirY * sped)] == 0) posY -= dirY * sped;
+            if (worldMap[MF(posX - dirX * sped)][MF(posY)] == 0) posX -= dirX * sped;
+            if (worldMap[MF(posX)][MF(posY - dirY * sped)] == 0) posY -= dirY * sped;
         }
         if (pressedKeys["68"]) {
             let oldDirX = dirX;
