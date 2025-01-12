@@ -5,12 +5,12 @@
         #g {
             background: black;
             display: block;
-            margin: 100px auto;
+            margin: auto;
         }
     </style>
 </head>
 <body>
-    <canvas id="g" width="640" height="480"></canvas>
+    <canvas id="g" width="1200" height="900"></canvas>
 </body>
 </html>
 
@@ -19,11 +19,9 @@
     window.onkeyup=function(e){pressedKeys[e.keyCode] = false;}
     window.onkeydown=function(e){pressedKeys[e.keyCode] = true;}
 
-    const scrWidth = 640; const scrHeight = 480;
-    const mapWidth = 24; const mapHeight = 24;
-
-    const onesArray = Array(mapWidth).fill(1);
-    let worldMap = [onesArray, ...Array(mapWidth-2).fill([1, ...Array(mapWidth-2).fill(0), 1]), onesArray];
+    const scrWidth = 1200; const scrHeight = 900;
+    const oA = Array(50).fill(1);
+    let worldMap = [oA, ...Array(48).fill([1, ...Array(48).fill(0), 1]), oA];
 
     let posX = 8;
     let posY = 8;
