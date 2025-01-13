@@ -16,29 +16,17 @@
     window.onkeyup=function(e){pressedKeys[e.keyCode] = false;}
     window.onkeydown=function(e){pressedKeys[e.keyCode] = true;}
 
-    const scrWidth = 1200; const scrHeight = 900;
-    const oA = Array(50).fill(1);
-    let worldMap = [oA, ...Array(48).fill([1, ...Array(48).fill(0), 1]), oA];
+    const scrWidth = 1200, scrHeight = 900, oA = Array(50).fill(1), MF = Math.floor;
+    const worldMap = Array.from({length: 50}, (_, i) => 
+        Array.from({length: 50}, (_, j) => 
+            i === 0 || j === 0 || i === 49 || j === 49 ? 1 : (Math.random() < 0.8 ? 0 : Math.floor(Math.random() * 3) + 2)
+        )
+    );
 
-    let posX = 8;
-    let posY = 8;
-    let dirX = -1;
-    let dirY = 0;
-    let planeX = 0;
-    let planeY = 0.66;
-
+    let posX = 8, posY = 8, dirX = -1, dirY = 0, planeX = 0, planeY = 0.66;
     var canvas = document.getElementById('g'); if (canvas.getContext) {var ctx = canvas.getContext('2d');}
 
-    const MF = Math.floor;
-
-    function getColor(c) {
-        switch(c) {
-            case 0: return '#f00';
-            case 1: return '#0f0';
-            case 2: return '#00f';
-            default: return '#fff';
-        }
-    }
+    const getColor = _color => ['#888', '#fff', '#080', '#0f0', '#008', '#00f', '#800', '#f00'][_color - 1] || '#fff';
     function drawLine(src, dst, srk='black', w=1) {
         if (srk) {ctx.strokeStyle = srk;}
         if (w) {ctx.lineWidth = w;}
@@ -46,6 +34,23 @@
         ctx.moveTo(...src);
         ctx.lineTo(...dst);
         ctx.stroke();
+    }
+    function drawMap() {
+        ctx.fillStyle = "black";
+        ctx.fillRect(40, 40, 200, 200);
+        for (let x = 0; x < 50; x++) {
+            for (let y = 0; y < 50; y++) {
+                if (worldMap[x][y] > 0) {
+                    let color = getColor(worldMap[x][y]*2);
+                    ctx.fillStyle = color;
+                    ctx.fillRect(40 + x * 4, 40 + y * 4, 4, 4);
+                }
+            }
+        }
+        ctx.fillStyle = "yellow";
+        ctx.beginPath();
+        ctx.arc(40 + posX * 4, 40 + posY * 4, 3, 0, 2 * Math.PI);
+        ctx.fill();
     }
     function updateFrame(delta) {
         ctx.clearRect(0, 0, scrWidth, scrHeight);
@@ -92,8 +97,8 @@
             let lineH = Math.abs(MF(h / perpWallDist));
             let drawsrc = Math.max(MF(-lineH / 2 + h / 2), 0);
             let drawdst = Math.min(MF(lineH / 2 + h / 2), h - 1);
-            let color = getColor(worldMap[mapX][mapY]);
-            if (side == 1) color = getColor(worldMap[mapX][mapY] - 1);
+            let color = getColor(worldMap[mapX][mapY]*2);
+            if (side == 1) color = getColor(worldMap[mapX][mapY]*2 - 1);
             drawLine([x, drawsrc], [x, drawdst], color, 1);
         }
 
@@ -123,6 +128,7 @@
             planeX = planeX * Math.cos(rsped) - planeY * Math.sin(rsped);
             planeY = oldPlaneX * Math.sin(rsped) + planeY * Math.cos(rsped);
         }
+        drawMap();
     }
 
     document.addEventListener("DOMContentLoaded", function(e) {
