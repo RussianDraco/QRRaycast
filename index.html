@@ -16,17 +16,27 @@
     window.onkeyup=function(e){pressedKeys[e.keyCode] = false;}
     window.onkeydown=function(e){pressedKeys[e.keyCode] = true;}
 
-    const scrWidth = 1200, scrHeight = 900, oA = Array(50).fill(1), MF = Math.floor;
-    const worldMap = Array.from({length: 50}, (_, i) => 
-        Array.from({length: 50}, (_, j) => 
-            i === 0 || j === 0 || i === 49 || j === 49 ? 1 : (Math.random() < 0.8 ? 0 : Math.floor(Math.random() * 3) + 2)
-        )
-    );
+    const scrWidth = 1200, scrHeight = 900, MF = Math.floor;
+
+    let worldMap, worldMapSize, doorX, doorY;
+    function generateMap(size) {
+        let oA = Array(size).fill(1);
+        worldMap = Array.from({length: size}, (_, i) => 
+            Array.from({length: size}, (_, j) => 
+                i === 0 || j === 0 || i === size-1 || j === size-1 ? 1 : (Math.random() < 0.8 ? 0 : Math.floor(Math.random() * 3) + 2)
+            )
+        );
+        worldMapSize = size;
+        doorX = Math.floor(Math.random() * (size-2)) + 1;
+        doorY = Math.floor(Math.random() * (size-2)) + 1;
+        worldMap[doorX][doorY] = 5;
+    }
+    generateMap(10);
 
     let posX = 8, posY = 8, dirX = -1, dirY = 0, planeX = 0, planeY = 0.66;
     var canvas = document.getElementById('g'); if (canvas.getContext) {var ctx = canvas.getContext('2d');}
 
-    const getColor = _color => ['#888', '#fff', '#080', '#0f0', '#008', '#00f', '#800', '#f00'][_color - 1] || '#fff';
+    const getColor = _color => ['#888', '#fff', '#080', '#0f0', '#008', '#00f', '#800', '#f00', '#808', '#f0f'][_color - 1] || '#fff';
     function drawLine(src, dst, srk='black', w=1) {
         if (srk) {ctx.strokeStyle = srk;}
         if (w) {ctx.lineWidth = w;}
@@ -37,9 +47,9 @@
     }
     function drawMap() {
         ctx.fillStyle = "black";
-        ctx.fillRect(40, 40, 200, 200);
-        for (let x = 0; x < 50; x++) {
-            for (let y = 0; y < 50; y++) {
+        ctx.fillRect(40, 40, worldMapSize*4, worldMapSize*4);
+        for (let x = 0; x < worldMapSize; x++) {
+            for (let y = 0; y < worldMapSize; y++) {
                 if (worldMap[x][y] > 0) {
                     let color = getColor(worldMap[x][y]*2);
                     ctx.fillStyle = color;
@@ -100,6 +110,11 @@
             let color = getColor(worldMap[mapX][mapY]*2);
             if (side == 1) color = getColor(worldMap[mapX][mapY]*2 - 1);
             drawLine([x, drawsrc], [x, drawdst], color, 1);
+
+            if (Math.abs(doorX - posX) < 1.5 && Math.abs(doorY - posY) < 1.5) {
+                generateMap(worldMapSize + 10);
+                posX = 8; posY = 8;
+            }
         }
 
         let sped = 5.0 * delta;
