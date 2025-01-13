@@ -1,6 +1,6 @@
 import qrcode
 
-with open("index.html", "r") as file:
+with open("mini.html", "r") as file:
     html_content = file.read()
 
 qr = qrcode.QRCode(
